@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlux OS | Enterprise Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .sidebar-link.active { background: rgba(255,255,255,0.1); border-left: 4px solid #3b82f6; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; } }
+        .intro-container { perspective: 1000px; }
+        .three-d-title { display: inline-block; animation: rotate3D 2.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; transform-style: preserve-3d; }
+        @keyframes rotate3D { 0% { opacity: 0; transform: rotateX(-90deg) rotateY(20deg) translateZ(-100px); } 100% { opacity: 1; transform: rotateX(0) rotateY(0) translateZ(0); } }
+        .flux-brand { color: #3b82f6; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        #errorPopup { display: none; backdrop-filter: blur(20px); animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+        .pulse-error { animation: pulseRed 2s infinite; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        #taskModal, #supportModal { display: none; backdrop-filter: blur(12px); animation: modalZoom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalZoom { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        #notificationPop { display: none; position: fixed; top: 20px; right: 20px; z-index: 1000; animation: fadeIn 0.5s; }
+        @media print { 
+            .no-print { display: none !important; } 
+            .print-only { display: block !important; } 
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <div id="notificationPop" class="bg-red-600 text-white p-6 rounded-2xl shadow-2xl font-black text-xs uppercase tracking-widest border-4 border-white">
+        ⚠️ License Expiring Soon! <br> Contact Admin for Renewal.
+    </div>
+
+    <div id="supportModal" class="fixed inset-0 z-[500] bg-slate-900/60 flex items-center justify-center p-6 no-print">
+        <div class="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden border border-white/20">
+            <div class="p-10 border-b border-slate-100 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Technical Help</p>
+                    <h2 class="text-3xl font-black text-slate-900 tracking-tighter">Support</h2>
+                </div>
+                <button onclick="closeSupportModal()" class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-10 space-y-6">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Developer Name</p>
+                    <p class="text-xl font-black text-slate-800 uppercase">Kiran Kumar D M</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Address</p>
+                    <p class="text-sm font-bold text-slate-600 leading-relaxed uppercase">Sunkadakatte, Bengaluru, Karnataka, India</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <a href="https://wa.me/918431421440" target="_blank" class="bg-[#25D366]/10 p-4 rounded-2xl border border-[#25D366]/20">
+                        <p class="text-[8px] font-black text-[#25D366] uppercase mb-1">WhatsApp Only</p>
+                        <p class="text-xs font-black text-slate-800">+91 8431421440</p>
+                    </a>
+                    <a href="mailto:kirankumardm777@gmail.com" class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                        <p class="text-[8px] font-black text-blue-600 uppercase mb-1">Mail ID</p>
+                        <p class="text-[10px] font-black text-slate-800 break-all">kirankumardm777@gmail.com</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="regModal" class="fixed inset-0 z-[400] bg-slate-900/95 flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-lg rounded-[3rem] p-10 shadow-2xl border-4 border-blue-500">
+            <h2 class="text-3xl font-black tracking-tighter mb-2 italic uppercase">Get Access</h2>
+            <div class="bg-blue-50 border-2 border-blue-200 p-4 rounded-2xl mb-6">
+                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Mandatory Payment Step</p>
+                <p class="text-lg font-black text-slate-900">Pay <span class="text-blue-600">Rs. 499/-</span></p>
+                <p class="text-sm font-bold text-slate-600 italic">UPI ID: <span class="bg-yellow-200 px-2 py-0.5 rounded">kdmtechnologies@axl</span></p>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="regName" placeholder="Full Name" class="w-full p-4 bg-slate-100 rounded-xl outline-none font-bold">
+                <input type="text" id="regWA" placeholder="WhatsApp Number" class="w-full p-4 bg-slate-100 rounded-xl outline-none font-bold">
+                <input type="email" id="regEmail" placeholder="Email Address" class="w-full p-4 bg-slate-100 rounded-xl outline-none font-bold">
+                <input type="password" id="regPass" maxlength="4" placeholder="Choose 4-Digit Passcode" class="w-full p-4 bg-slate-100 rounded-xl outline-none font-bold text-center text-2xl tracking-[0.5em]">
+                <button onclick="submitReg()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl uppercase tracking-widest hover:bg-slate-900 transition-all">Send Payment Proof</button>
+                <button onclick="toggleReg(false)" class="w-full text-slate-400 font-bold text-[10px] uppercase">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskModal" class="fixed inset-0 z-[300] bg-slate-900/60 flex items-center justify-center p-6 no-print">
+        <div class="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden border border-white/20">
+            <div class="p-10 border-b border-slate-100 flex justify-between items-start">
+                <div class="flex-1 mr-4">
+                    <select id="modalCat" class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-2 block bg-transparent outline-none"></select>
+                    <input type="text" id="modalTitle" class="text-3xl font-black text-slate-900 tracking-tighter leading-tight w-full outline-none focus:text-blue-600">
+                </div>
+                <button onclick="closeModal()" class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-10 bg-slate-50/50">
+                <textarea id="modalDesc" rows="6" class="w-full bg-transparent text-slate-600 font-medium leading-relaxed outline-none focus:ring-0 text-lg resize-none"></textarea>
+            </div>
+            <div class="p-8 border-t border-slate-100 flex justify-between items-center bg-white">
+                <span id="modalDate" class="text-[10px] font-bold text-slate-400 uppercase italic"></span>
+                <button id="saveEditBtn" class="bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-95">Modify Task</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorPopup" class="fixed inset-0 z-[200] bg-red-600/10 flex items-center justify-center p-6 no-print">
+        <div class="bg-white/90 p-12 rounded-[3rem] shadow-2xl max-w-lg w-full text-center border border-white pulse-error">
+            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-black text-slate-900 mb-4 tracking-tighter uppercase">Access Denied</h2>
+            <p id="errorMsg" class="text-slate-600 font-medium leading-relaxed mb-8">Wrong passcode. Please contact the developer<br><span class="font-black text-slate-900">Mr. Kiran Kumar D M</span></p>
+            <div class="space-y-3">
+                <button onclick="openSupportModal(); closeError();" class="block w-full bg-[#25D366] text-white font-black py-4 rounded-2xl shadow-xl hover:scale-105 transition-all uppercase tracking-widest text-sm">Direct WhatsApp Contact</button>
+                <button onclick="closeError()" class="block w-full py-4 text-slate-400 font-bold text-xs uppercase hover:text-slate-600">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authShield" class="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center no-print">
+        <div class="w-full max-w-md p-10 text-center intro-container">
+            <h2 class="three-d-title text-5xl font-black text-white mb-4 tracking-tighter italic uppercase">TASK<span class="flux-brand">FLUX</span></h2>
+            <p class="text-[10px] font-bold text-slate-500 tracking-[0.3em] mb-12 uppercase">Advanced Operational OS</p>
+            <input type="password" id="passCode" placeholder="••••" oninput="handleAutoLogin(this.value)" class="w-full bg-slate-800 border-none rounded-2xl py-6 text-center text-3xl text-blue-400 tracking-[0.1em] focus:ring-2 ring-blue-500 outline-none mb-8 shadow-2xl">
+            <div class="flex flex-col gap-4">
+                <p class="text-slate-600 text-[10px] font-black uppercase tracking-[0.2em]">Verified Secure Environment</p>
+                <button onclick="toggleReg(true)" class="text-blue-500 font-bold text-[10px] uppercase tracking-widest hover:underline">New User? Buy App License</button>
+            </div>
+        </div>
+    </div>
+
+    <aside class="w-72 bg-[#0f172a] text-slate-400 flex flex-col no-print">
+        <div class="p-6 border-b border-slate-800/50">
+            <span class="text-white font-black tracking-tighter text-xl uppercase italic block">Task<span class="text-blue-500">Flux</span></span>
+            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter block mt-1">Developed by Kiran Kumar D M</span>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            <div id="userNavGroup" class="space-y-2">
+                <button onclick="showTab('dash-tab', this)" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all">Dashboard & Success</button>
+                <button onclick="showTab('tasks-tab', this)" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all">Daily Task Ledger</button>
+                <button onclick="showTab('cat-tab', this)" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all">Manage Categories</button>
+                <button onclick="showTab('add-tab', this)" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-blue-400">+ Add Daily Report</button>
+                <button onclick="openSupportModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black text-green-400 border border-green-500/10 bg-green-500/5 hover:bg-green-500/10 transition-all uppercase tracking-widest mt-8">📞 Support Help</button>
+            </div>
+            <button id="adminTabLink" onclick="showTab('admin-tab', this)" class="hidden sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black text-red-400 border border-red-500/20">Admin: User Control</button>
+        </nav>
+        <div class="p-6 border-t border-slate-800/50 space-y-4">
+            <div>
+                <p id="sidebarRoleLabel" class="text-[10px] font-black text-slate-500 uppercase mb-1">Lead Developer</p>
+                <p id="sidebarNameDisplay" class="text-xs font-bold text-white">Kiran Kumar D M</p>
+            </div>
+            <button onclick="logout()" class="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Terminate Session</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative overflow-y-auto bg-[#f8fafc]">
+        <header class="bg-white h-20 px-10 flex items-center justify-between sticky top-0 z-40 border-b border-slate-200 no-print">
+            <h2 id="viewTitle" class="text-xl font-black text-slate-800 tracking-tight">Success Analytics</h2>
+            <div class="flex items-center gap-6">
+                <div id="expiryBadge" class="hidden text-xs font-black px-4 py-2 rounded-full uppercase tracking-tighter"></div>
+                <button onclick="window.print()" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-blue-600 transition">EXPORT REPORT (PDF)</button>
+            </div>
+        </header>
+
+        <div class="p-10 flex-1" id="printArea">
+            <div id="dash-tab" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Total Tasks</p><h3 id="statTotal" class="text-4xl font-black text-slate-800">0</h3></div>
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Success Analytics</p><h3 id="statSuccess" class="text-4xl font-black text-green-500">0%</h3></div>
+                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Pending Audit</p><h3 id="statPending" class="text-4xl font-black text-blue-600">0</h3></div>
+                </div>
+                <h3 class="font-black text-slate-800 text-lg mb-6">Recent System Logs</h3>
+                <div id="recentLog" class="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm"></div>
+            </div>
+
+            <div id="tasks-tab" class="tab-content"><div id="taskGrid" class="space-y-4"></div></div>
+
+            <div id="cat-tab" class="tab-content">
+                <div class="max-w-md bg-white p-8 rounded-3xl border shadow-sm">
+                    <h3 class="font-black mb-6 italic">Category Registry</h3>
+                    <div class="flex gap-2 mb-6"><input type="text" id="newCatIn" class="flex-1 p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 ring-blue-500 font-bold" placeholder="New Category..."><button onclick="addCat()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">+</button></div>
+                    <div id="catDisplay" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <div id="add-tab" class="tab-content">
+                <div class="max-w-xl bg-white p-10 rounded-[3rem] shadow-xl border">
+                    <h2 class="text-2xl font-black text-slate-800 mb-8 tracking-tighter uppercase">New Daily Report</h2>
+                    <div class="space-y-6">
+                        <input type="text" id="tTitle" placeholder="Task Subject" class="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500">
+                        <select id="tCat" class="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500"></select>
+                        <textarea id="tDesc" rows="4" placeholder="Report details..." class="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500"></textarea>
+                        <button onclick="saveTask()" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl text-sm tracking-widest hover:bg-blue-700 transition-all uppercase">Post to Ledger</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-tab" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-black">User License Portal</h3>
+                </div>
+                <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b">
+                            <tr class="text-[10px] font-black uppercase text-slate-400">
+                                <th class="p-6">User Details</th>
+                                <th class="p-6">Passcode</th>
+                                <th class="p-6">Expiry</th>
+                                <th class="p-6">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTable"></tbody>
+                    </table>
+                </div>
+                <input type="file" id="importJson" class="hidden" accept=".json" onchange="importBackup(this)">
+            </div>
+        </div>
+
+        <footer class="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] text-center border-t no-print">Developed by Kiran Kumar D M</footer>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyABcljNoGKJUiWC4ELp_wSFBg_irEONqqE",
+            authDomain: "taskfluxweb.firebaseapp.com",
+            projectId: "taskfluxweb",
+            storageBucket: "taskfluxweb.firebasestorage.app",
+            messagingSenderId: "615824251611",
+            appId: "1:615824251611:web:59959513a5cf18fab9cafe"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        window.db = db;
+        window.setDoc = setDoc;
+        window.doc = doc;
+
+        onSnapshot(doc(db, "system", "state"), (docSnap) => {
+            if (docSnap.exists()) {
+                const cloudData = docSnap.data();
+                state.tasks = cloudData.tasks || [];
+                state.cats = cloudData.cats || [];
+                state.users = cloudData.users || [];
+                render();
+            }
+        });
+    </script>
+
+    <script>
+        const ADMIN_PIN = "IamAdmin@7353421440";
+        let currentUser = null;
+
+        let state = {
+            tasks: JSON.parse(localStorage.getItem('TF_V3_TASKS')) || [],
+            cats: JSON.parse(localStorage.getItem('TF_V3_CATS')) || ['Accounts', 'Payroll', 'General', 'IT Support'],
+            users: JSON.parse(localStorage.getItem('TF_USERS')) || []
+        };
+
+        window.handleAutoLogin = function(val) {
+            if(val === ADMIN_PIN) {
+                currentUser = { name: "Lead Admin", isAdmin: true };
+                document.getElementById('adminTabLink').classList.remove('hidden');
+                document.getElementById('userNavGroup').classList.add('hidden');
+                document.getElementById('authShield').style.display = 'none';
+                document.getElementById('sidebarRoleLabel').innerText = "System Admin";
+                document.getElementById('sidebarNameDisplay').innerText = "Lead Administrator";
+                showTab('admin-tab', document.getElementById('adminTabLink'));
+                render();
+                return;
+            }
+
+            if(val.length === 4) {
+                const user = state.users.find(u => u.passcode === val);
+                if(user) {
+                    if(user.status === 'deactivated') {
+                        showError("ACCESS BLOCKED. License has been deactivated by Admin.");
+                        return;
+                    }
+                    const expiry = new Date(user.expiry);
+                    if(new Date() > expiry) {
+                        showError("LICENSE EXPIRED. Please pay Rs. 499 for renewal.");
+                        return;
+                    }
+                    currentUser = user;
+                    document.getElementById('authShield').style.display = 'none';
+                    document.getElementById('userNavGroup').classList.remove('hidden');
+                    document.getElementById('adminTabLink').classList.add('hidden');
+                    document.getElementById('sidebarRoleLabel').innerText = "System User";
+                    document.getElementById('sidebarNameDisplay').innerText = user.name;
+                    handleLicenseAlerts(expiry);
+                    render();
+                } else {
+                    showError("Invalid PIN.");
+                }
+            }
+        }
+
+        function handleLicenseAlerts(expiryDate) {
+            const daysLeft = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+            const badge = document.getElementById('expiryBadge');
+            badge.classList.remove('hidden', 'text-green-600', 'text-red-600', 'bg-green-100', 'bg-red-100');
+
+            if(daysLeft <= 30) {
+                badge.innerText = `EXPIRING IN ${daysLeft} DAYS`;
+                badge.classList.add('text-red-600', 'bg-red-100', 'block');
+                const pop = document.getElementById('notificationPop');
+                pop.style.display = 'block';
+                setTimeout(() => pop.style.display = 'none', 5000);
+            } else {
+                badge.innerText = `LICENSE EXPIRES: ${expiryDate.toLocaleDateString()}`;
+                badge.classList.add('text-green-600', 'bg-green-100', 'block');
+            }
+        }
+
+        window.toggleReg = function(show) { document.getElementById('regModal').classList.toggle('hidden', !show); }
+
+        window.submitReg = function() {
+            const name = document.getElementById('regName').value;
+            const wa = document.getElementById('regWA').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            if(!name || !wa || !pass) return alert("All fields are required.");
+
+            const newUser = { id: Date.now(), name, whatsapp: wa, email, passcode: pass, expiry: new Date().toISOString(), status: 'pending' };
+            state.users.push(newUser);
+            sync();
+
+            const msg = encodeURIComponent(`System Activation Request\nName: ${name}\nWA: ${wa}\nPIN: ${pass}`);
+            window.open(`https://wa.me/918431421440?text=${msg}`, '_blank');
+            alert("Details saved. License will be active after Admin verification.");
+            toggleReg(false);
+        }
+
+        window.exportBackup = function(userId) {
+            const user = state.users.find(u => u.id === userId);
+            const backupData = { userProfile: user, systemState: state };
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TaskFlux_Backup_${user.name.replace(/\s/g, '_')}.json`;
+            a.click();
+        }
+
+        window.triggerRestore = function() {
+            document.getElementById('importJson').click();
+        }
+
+        window.importBackup = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.systemState && data.userProfile) {
+                        state = data.systemState;
+                        sync();
+                        alert("System Restore Successful!");
+                    } else { throw new Error("Format"); }
+                } catch (err) { alert("Error: Invalid JSON backup file."); }
+            };
+            reader.readAsText(file);
+        }
+
+        window.renewUser = function(id) {
+            const user = state.users.find(u => u.id === id);
+            if (user) {
+                const newDate = new Date();
+                newDate.setDate(newDate.getDate() + 365);
+                user.expiry = newDate.toISOString();
+                user.status = 'active';
+                sync();
+            }
+        }
+
+        window.deactivateUser = function(id) {
+            const user = state.users.find(u => u.id === id);
+            if (user) {
+                user.status = user.status === 'deactivated' ? 'active' : 'deactivated';
+                sync();
+            }
+        }
+
+        window.deleteUser = function(id) {
+            if(confirm("Permanently remove this user?")) {
+                state.users = state.users.filter(u => u.id !== id);
+                sync();
+            }
+        }
+
+        window.showError = function(msg) {
+            document.getElementById('errorMsg').innerText = msg;
+            document.getElementById('errorPopup').style.display = 'flex';
+        }
+
+        window.openSupportModal = function() { document.getElementById('supportModal').style.display = 'flex'; }
+        window.closeSupportModal = function() { document.getElementById('supportModal').style.display = 'none'; }
+        window.closeModal = function() { document.getElementById('taskModal').style.display = 'none'; }
+        
+        window.openTask = function(id) {
+            const t = state.tasks.find(x => x.id === id);
+            const modalCat = document.getElementById('modalCat');
+            modalCat.innerHTML = state.cats.map(c => `<option value="${c}" ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('');
+            document.getElementById('modalTitle').value = t.title;
+            document.getElementById('modalDesc').value = t.desc;
+            document.getElementById('modalDate').innerText = "Last Updated: " + t.date;
+            document.getElementById('saveEditBtn').onclick = () => {
+                t.title = document.getElementById('modalTitle').value;
+                t.cat = document.getElementById('modalCat').value;
+                t.desc = document.getElementById('modalDesc').value;
+                t.date = new Date().toLocaleString('en-IN'); 
+                sync();
+                closeModal();
+            };
+            document.getElementById('taskModal').style.display = 'flex';
+        }
+
+        window.closeError = function() { document.getElementById('errorPopup').style.display = 'none'; document.getElementById('passCode').value = ''; }
+        window.logout = function() { location.reload(); }
+
+        window.showTab = function(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+            const titles = { 'dash-tab': 'Success Analytics', 'tasks-tab': 'Daily Task Ledger', 'cat-tab': 'Manage Categories', 'add-tab': 'New Entry', 'admin-tab': 'Admin Panel' };
+            document.getElementById('viewTitle').innerText = titles[id];
+            render();
+        }
+
+        window.saveTask = function() {
+            const title = document.getElementById('tTitle').value;
+            const cat = document.getElementById('tCat').value;
+            const desc = document.getElementById('tDesc').value;
+            if(!title) return;
+            state.tasks.unshift({ id: Date.now(), title, cat, desc, status: 'open', date: new Date().toLocaleString('en-IN') });
+            sync();
+            showTab('tasks-tab', document.querySelectorAll('.sidebar-link')[1]);
+            document.getElementById('tTitle').value = ''; document.getElementById('tDesc').value = '';
+        }
+
+        window.addCat = function() {
+            const v = document.getElementById('newCatIn').value.trim();
+            if(v && !state.cats.includes(v)) { state.cats.push(v); sync(); document.getElementById('newCatIn').value = ''; }
+        }
+
+        window.modifyCat = function(oldVal) {
+            const newVal = prompt("Rename Category:", oldVal);
+            if (newVal && newVal.trim() !== "" && newVal !== oldVal) {
+                state.cats = state.cats.map(c => c === oldVal ? newVal.trim() : c);
+                state.tasks.forEach(t => { if (t.cat === oldVal) t.cat = newVal.trim(); });
+                sync();
+            }
+        }
+
+        window.deleteCat = function(c) {
+            if(confirm(`Delete "${c}"?`)) { state.cats = state.cats.filter(x => x !== c); sync(); }
+        }
+
+        window.toggle = function(id) { const t = state.tasks.find(x => x.id === id); t.status = t.status === 'open' ? 'closed' : 'open'; sync(); }
+        window.removeTask = function(id) { if(confirm("Delete this task?")) { state.tasks = state.tasks.filter(x => x.id !== id); sync(); } }
+
+        async function sync() {
+            localStorage.setItem('TF_V3_TASKS', JSON.stringify(state.tasks));
+            localStorage.setItem('TF_V3_CATS', JSON.stringify(state.cats));
+            localStorage.setItem('TF_USERS', JSON.stringify(state.users));
+            
+            if(window.db) {
+                try {
+                    await window.setDoc(window.doc(window.db, "system", "state"), {
+                        tasks: state.tasks,
+                        cats: state.cats,
+                        users: state.users
+                    });
+                } catch(e) { console.error("Cloud Error:", e); }
+            }
+            render();
+        }
+
+        function render() {
+            const total = state.tasks.length;
+            const closed = state.tasks.filter(x => x.status === 'closed').length;
+            const pending = total - closed;
+            const percent = total > 0 ? Math.round((closed / total) * 100) : 0;
+            
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statSuccess').innerText = percent + "%";
+            document.getElementById('statPending').innerText = pending;
+
+            document.getElementById('taskGrid').innerHTML = state.tasks.map(t => `
+                <div onclick="openTask(${t.id})" class="bg-white p-6 rounded-3xl border border-slate-100 flex justify-between items-center group cursor-pointer hover:shadow-lg transition-all">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${t.cat}</span>
+                            <span class="text-[8px] font-bold text-slate-300 uppercase">${t.date}</span>
+                        </div>
+                        <h4 class="font-black text-slate-800 ${t.status === 'closed' ? 'line-through opacity-50' : ''}">${t.title}</h4>
+                        <p class="text-xs text-slate-500 font-medium truncate max-w-lg">${t.desc}</p>
+                    </div>
+                    <div class="flex gap-4 no-print items-center ml-4" onclick="event.stopPropagation()">
+                        <button onclick="toggle(${t.id})" class="text-[10px] font-black uppercase ${t.status === 'open' ? 'text-blue-600' : 'text-green-600'}">${t.status === 'open' ? 'COMPLETE' : 'REOPEN'}</button>
+                        <button onclick="removeTask(${t.id})" class="text-red-400 opacity-0 group-hover:opacity-100 transition">Delete</button>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center py-20 text-slate-400 font-bold italic">No daily tasks found.</p>';
+
+            document.getElementById('catDisplay').innerHTML = state.cats.map(c => `
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border">
+                    <span class="text-sm font-bold text-slate-700">${c}</span>
+                    <div class="flex gap-3">
+                        <button onclick="modifyCat('${c}')" class="text-blue-500 text-[10px] font-black uppercase">Rename</button>
+                        <button onclick="deleteCat('${c}')" class="text-red-400 text-[10px] font-black uppercase">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('userTable').innerHTML = state.users.map(u => `
+                <tr class="border-b hover:bg-slate-50/50 transition-colors">
+                    <td class="p-6">
+                        <p class="font-black text-slate-800">${u.name}</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">${u.whatsapp} | ${u.email || 'No Email'}</p>
+                        <p class="text-[8px] font-black uppercase ${u.status === 'deactivated' ? 'text-red-600' : 'text-green-600'}">${u.status || 'Active'}</p>
+                    </td>
+                    <td class="p-6 font-mono font-black text-blue-600 text-lg">${u.passcode}</td>
+                    <td class="p-6">
+                        <span class="text-[10px] font-black px-3 py-1 rounded-full uppercase ${new Date(u.expiry) < new Date() ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                            ${new Date(u.expiry).toLocaleDateString()}
+                        </span>
+                    </td>
+                    <td class="p-6">
+                        <div class="flex gap-2">
+                            <button onclick="renewUser(${u.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">Renew</button>
+                            <button onclick="deactivateUser(${u.id})" class="${u.status === 'deactivated' ? 'bg-green-600' : 'bg-orange-500'} text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">${u.status === 'deactivated' ? 'Reactivate' : 'Block Access'}</button>
+                            <button onclick="exportBackup(${u.id})" class="bg-green-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">Backup</button>
+                            <button onclick="triggerRestore()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest">Restore</button>
+                            <button onclick="deleteUser(${u.id})" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold italic">No user registrations found.</td></tr>';
+
+            document.getElementById('recentLog').innerHTML = state.tasks.slice(0, 5).map(t => `
+                <div class="px-8 py-4 border-b border-slate-50 flex items-center justify-between last:border-none">
+                    <span class="text-xs font-bold text-slate-600">${t.title}</span>
+                    <span class="text-[9px] font-black uppercase text-slate-300">${t.status}</span>
+                </div>
+            `).join('') || '<p class="p-8 text-center text-xs text-slate-400 italic">Logs are currently empty.</p>';
+            
+            document.getElementById('tCat').innerHTML = state.cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+    </script>
+</body>
+</html>
